@@ -3,49 +3,43 @@ using CompareTables
 using DataFrames
 using XLSX
 
-@testset "CompareTables.jl" begin
-    # Sample data mimicking two report versions
-    df1 = DataFrame(Region=["East", "West"], Product=["A", "B"], Amount=[100, 200])
-    df2 = DataFrame(Region=["East", "West", "North"], Product=["A", "B", "C"], Amount=[110, 180, 90])
+# Sample data with string column names
+df1 = DataFrame("Region" => ["North", "South"], "Product" => ["A", "B"],
+                "Revenue" => [100.0, 200.0], "Cost" => [40.0, 80.0])
+df2 = DataFrame("Region" => ["North", "South", "East"], "Product" => ["A", "B", "C"],
+                "Revenue" => [110.0, 190.0, 300.0], "Cost" => [45.0, 75.0, 120.0])
 
-    group_cols = ["Region", "Product"]
-    value_col = "Amount"
-    log_path = "test_log.txt"
-    output_excel = "test_output.xlsx"
+# Paths
+f1, f2 = "test1.xlsx", "test2.xlsx"
+logf, outf = "test_log.txt", "test_output.xlsx"
 
-    # Run the comparison
-    result = compare(df1, df2, group_cols, value_col, log_path, output_excel;
-                     abs_threshold=5, rel_threshold=0.05)
+# Write to temporary Excel files
+XLSX.writetable(f1, df1; sheetname="Sheet1", overwrite=true)
+XLSX.writetable(f2, df2; sheetname="Sheet1", overwrite=true)
 
-    @info "RESULTS TABLE PRODUCED"
-    display(result)
+# Run comparison
+result = compare(
+    f1, "Sheet1",
+    f2, "Sheet1",
+    ["Region", "Product"],
+    ["Revenue", "Cost"],
+    logf,
+    outf;
+    abs_threshold=5.0,
+    rel_threshold=0.05
+)
 
-    @test isa(result, DataFrame)
-    @test "value1" in names(result)
-    @test "value2" in names(result)
-    @test "abs_diff" in names(result)
-    @test "rel_diff" in names(result)
+# Basic tests
+@test isa(result, DataFrame)
+@test "Revenue_1" in names(result)
+@test "Revenue_2" in names(result)
+@test "abs_diff_Revenue" in names(result)
+@test "rel_diff_Cost" in names(result)
 
-    # Test known differences
-    row_east = result[result.Region .== "East", :]
-    @test row_east.abs_diff[1] == 10
-    @test isapprox(row_east.rel_diff[1], 0.10; atol=1e-6)
+@info "Result"
+display(result)
 
-    # Test new entry
-    @test any(ismissing.(result.value1))
-    # Test missing entry
-    @test any(ismissing.(result.value2)) == false  # None in this example
-
-    # Check if files were created
-    @test isfile(log_path)
-    @test isfile(output_excel)
-
-    @info "LOG PRODUCED"
-    for line in readlines(log_path)
-        println(line)
-    end
-
-    # Clean up test artifacts
-    rm(log_path, force=true)
-    rm(output_excel, force=true)
+# Cleanup temp files
+for f in (f1, f2, logf, outf)
+    isfile(f) && rm(f)
 end

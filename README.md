@@ -1,108 +1,112 @@
 # CompareTables.jl
 
-Compare two versions of a tabular Excel report or two DataFrames with aggregation, difference analysis, and change tracking.
+📊 **CompareTables.jl** is a Julia package to compare two versions of a tabular Excel report. It groups, sums, and compares values by key columns, highlighting differences, new/missing entries, and exporting results with a log file and annotated Excel table.
 
-## 📦 Features
+---
 
-- Accepts either two Excel files **or** two `DataFrame`s directly
-- Group by key columns and sum a value column
-- Side-by-side comparison of old vs. new values
-- Compute **absolute** and **relative** differences
-- Highlight:
-  - Entries with large differences
-  - New entries in the updated report
-  - Entries missing from the updated report
-- Save:
-  - Detailed difference table to Excel
-  - Log file with summary and warnings
+## ✨ Features
 
-## 🛠 Installation
+- Compare two Excel sheets grouped by one or more columns.
+- Support for **multiple value columns**.
+- Automatic calculation of **absolute** and **relative differences**.
+- Threshold-based **warnings** for large deviations.
+- Detects **new** and **missing** entries between reports.
+- Outputs:
+  - Clean Excel file with comparison
+  - Human-readable log file with all results
 
-To use locally during development:
+---
 
-```julia
-using Pkg
-Pkg.develop(path="path/to/CompareTables")
-```
-
-Install dependencies if needed:
+## 📦 Installation
 
 ```julia
-Pkg.add(["XLSX", "DataFrames"])
-```
-
-## 🚀 Usage
-
-### Option 1: Compare from Excel Files
-
-```julia
-using CompareTables
-
-compare("report_v1.xlsx", "Sheet1",
-        "report_v2.xlsx", "Sheet1",
-        ["Region", "Product"], "Amount",
-        "log.txt", "comparison.xlsx";
-        abs_threshold=10, rel_threshold=0.05)
-```
-
-### Option 2: Compare DataFrames
-
-```julia
-df1 = DataFrame(XLSX.readtable("report_v1.xlsx", "Sheet1")...)
-df2 = DataFrame(XLSX.readtable("report_v2.xlsx", "Sheet1")...)
-
-compare(df1, df2, ["Region", "Product"], "Amount",
-        "log.txt", "comparison.xlsx";
-        abs_threshold=10, rel_threshold=0.05)
-```
-
-## 🧮 Example
-
-Given reports:
-
-**report_v1.xlsx**
-| Region | Product | Amount |
-|--------|---------|--------|
-| East   | A       | 100    |
-| West   | B       | 200    |
-
-**report_v2.xlsx**
-| Region | Product | Amount |
-|--------|---------|--------|
-| East   | A       | 110    |
-| West   | B       | 180    |
-| North  | C       | 90     |
-
-Output:
-- `A` in `East`: ↑ +10 (+10%)
-- `B` in `West`: ↓ −20 (−10%)
-- `C` in `North`: new entry
-
-## 📁 Output
-
-- **comparison.xlsx**: Full table with values, diffs
-- **log.txt**: Summary log with threshold exceedances, new/missing entries, and total difference
-
-## ⚙️ Parameters
-
-| Parameter        | Description                                     | Default        |
-|------------------|--------------------------------------------------|----------------|
-| `abs_threshold`  | Minimum absolute difference to report            | `1e-2`         |
-| `rel_threshold`  | Minimum relative difference to report (fraction) | `0.01`         |
-
-## 🔬 Testing
-
-Add tests in `test/runtests.jl` to validate basic behavior:
-
-```julia
-using CompareTables
-using Test
-
-@testset "CompareTables.jl" begin
-    @test isdefined(CompareTables, :compare)
-end
+pkg> add CompareTables
 ```
 
 ---
 
-**CompareTables.jl** simplifies table version control, audit reporting, and Excel-based analysis workflows.
+## 🚀 Usage
+
+```julia
+using CompareTables
+
+compare(
+    "old_report.xlsx", "Sheet1",
+    "new_report.xlsx", "Sheet1",
+    ["Region", "Product"],           # group columns
+    ["Revenue", "Cost"],             # value columns
+    "log.txt",                       # path to log output
+    "comparison.xlsx";              # path to Excel output
+    abs_threshold=100.0,
+    rel_threshold=0.05
+)
+```
+
+This will generate:
+
+- A file `comparison.xlsx` with all groupings and their:
+  - Original values (`<col>_1`)
+  - New values (`<col>_2`)
+  - `abs_diff_<col>` and `rel_diff_<col>` columns
+- A `log.txt` file with:
+  - Total absolute difference
+  - Warnings for large differences
+  - Lists of new or missing entries
+
+---
+
+## 📄 Output Example (Excel and Log)
+
+| Region | Product | Revenue_1 | Revenue_2 | abs_diff_Revenue | rel_diff_Revenue | ... |
+|--------|---------|-----------|-----------|------------------|------------------|-----|
+| North  | A       | 1200.0    | 1250.0    | 50.0             | 0.0417           |     |
+| South  | B       | 800.0     | missing   | 800.0            | 1.0              |     |
+
+And in `log.txt`:
+
+```
+CompareTables.jl Log - 2025-06-03T18:45:12
+Total Absolute Difference (all columns): 205.0
+
+[Entries with absolute diff > 100.0]
+...
+
+[Entries with relative diff > 0.05]
+...
+
+[New Entries in Report 2]
+...
+
+[Entries Missing from Report 2]
+...
+```
+
+---
+
+## ⚙️ Options
+
+| Parameter       | Description                               | Default |
+|----------------|-------------------------------------------|---------|
+| `abs_threshold` | Absolute diff threshold to warn           | `1e-2`  |
+| `rel_threshold` | Relative diff threshold to warn (0–1)     | `0.01`  |
+
+---
+
+## 🧪 Testing
+
+```julia
+using Pkg
+Pkg.test("CompareTables")
+```
+
+---
+
+## 📬 Contributions
+
+PRs and issues welcome! Let’s make report validation easier for everyone.
+
+---
+
+## 📜 License
+
+MIT
