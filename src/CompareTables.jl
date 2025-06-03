@@ -56,13 +56,13 @@ function compare(df1::DataFrame, df2::DataFrame,
     open(log_path, "w") do io
         println(io, "CompareTables.jl Log - $(Dates.now())")
         println(io, "Total Absolute Difference: $total_diff")
-        println(io, "\nEntries with absolute diff > $abs_threshold:\n")
+        println(io, "\n\n[Entries with absolute diff > $abs_threshold]")
         show(io, over_abs; allcols=true)
-        println(io, "\nEntries with relative diff > $rel_threshold:\n")
+        println(io, "\n\n[Entries with relative diff > $rel_threshold]")
         show(io, over_rel; allcols=true)
-        println(io, "\nNew Entries in Report 2:\n")
+        println(io, "\n\n[New Entries in Report 2]")
         show(io, new_entries; allcols=true)
-        println(io, "\nEntries Missing from Report 2:\n")
+        println(io, "\n\n[Entries Missing from Report 2]")
         show(io, missing_entries; allcols=true)
     end
 
