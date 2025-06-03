@@ -18,8 +18,8 @@ function compare(
     rel_threshold::Real=0.01
 )
 
-    df1 = DataFrame(XLSX.readtable(file1, sheet1)...)
-    df2 = DataFrame(XLSX.readtable(file2, sheet2)...)
+    df1 = DataFrame(XLSX.readtable(file1, sheet1))
+    df2 = DataFrame(XLSX.readtable(file2, sheet2))
 
     compare(
         df1, df2, group_cols, value_col, log_path, output_excel;
